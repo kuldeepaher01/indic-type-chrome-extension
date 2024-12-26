@@ -190,7 +190,7 @@ const KEY_ENTER = 14;
 const KEY_TAB = 9;
 const KEY_SPACE = 32;
 
-const triggerKeys = [KEY_RETURN, KEY_ENTER, KEY_SPACE];
+const triggerKeys = [KEY_RETURN, KEY_ENTER];
 
 const OPTION_LIST_Y_OFFSET = 20;
 const OPTION_LIST_MIN_WIDTH = 100;
@@ -252,20 +252,19 @@ const reset = () => {
 
 const handleSelection = (index) => {
   const currentString = value;
-  // create a new string with the currently typed word
-  // replaced with the word in transliterated language
   if (typeof currentString !== "string") return;
+
+  // Remove the extra space that was being added after the suggestion
   const newValue =
     currentString.substring(0, matchStart) +
     suggestions[index] +
-    " " +
     currentString.substring(matchEnd + 1, currentString.length);
 
-  // set the position of the caret (cursor) one character after the
-  // the position of the new word
-  setCaretPosition(activeElement, matchStart + suggestions[index].length + 1);
+  // Set the position of the caret after the inserted word
+  setCaretPosition(activeElement, matchStart + suggestions[index].length);
 
   activeElement.value = newValue;
+  // activeElement.dispatchEvent(new Event("input", { bubbles: true }));
   reset();
 };
 
@@ -288,19 +287,29 @@ const handleKeyDown = (event) => {
 
   if (helperVisible) {
     event.stopPropagation();
+
     if (triggerKeys.includes(event.keyCode)) {
-      handleSelection(selectionIndex);
       event.preventDefault();
+      handleSelection(selectionIndex);
     } else {
       switch (event.keyCode) {
+        case KEY_SPACE:
+          // reset();
+          if (suggestions.length > 0) {
+            event.preventDefault();
+            handleSelection(selectionIndex);
+          }
+          break;
         case KEY_ESCAPE:
           reset();
           break;
         case KEY_UP:
+          event.preventDefault();
           selectionIndex =
             (suggestions.length + selectionIndex - 1) % suggestions.length;
           break;
         case KEY_DOWN:
+          event.preventDefault();
           selectionIndex = (selectionIndex + 1) % suggestions.length;
           break;
       }
